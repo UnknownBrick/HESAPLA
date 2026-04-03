@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dream League — Gelir Hesaplayıcı</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0b0f;
+    --surface: #111318;
+    --surface2: #181b22;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --accent: #7fffb0;
+    --accent-dim: rgba(127,255,176,0.12);
+    --accent-glow: rgba(127,255,176,0.25);
+    --text: #f0f2f5;
+    --text2: #8b92a0;
+    --text3: #555d6b;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --radius-lg: 16px;
+    --font: 'Syne', sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    min-height: 100vh;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+    opacity: 0.025; pointer-events: none; z-index: 9999;
+  }
+
+  .glow-blob { position:fixed; border-radius:50%; filter:blur(120px); pointer-events:none; z-index:0; }
+  .glow-blob.g1 { width:500px; height:500px; background:rgba(127,255,176,0.06); top:-150px; right:-100px; }
+  .glow-blob.g2 { width:400px; height:400px; background:rgba(239,108,65,0.05); bottom:-100px; left:-100px; }
+
+  .container { position:relative; z-index:1; max-width:860px; margin:0 auto; padding:48px 24px 80px; }
+
+  .header { margin-bottom: 48px; }
+  .header-badge {
+    display:inline-flex; align-items:center; gap:6px;
+    background:var(--accent-dim); border:1px solid rgba(127,255,176,0.2);
+    border-radius:100px; padding:4px 12px; font-size:11px; font-weight:600;
+    color:var(--accent); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:16px;
+  }
+  .header-badge::before {
+    content:''; width:6px; height:6px; border-radius:50%;
+    background:var(--accent); animation:pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  h1 { font-size:clamp(28px,5vw,44px); font-weight:800; letter-spacing:-0.03em; line-height:1.1; }
+  h1 span { color:var(--accent); }
+  .header-sub { margin-top:10px; font-size:14px; color:var(--text2); font-weight:400; }
+
+  .currency-tabs {
+    display:flex; gap:6px; background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius); padding:5px; width:fit-content; margin-bottom:32px;
+  }
+  .currency-tabs button {
+    padding:7px 20px; font-size:13px; font-family:var(--font); font-weight:600;
+    border-radius:var(--radius-sm); border:none; cursor:pointer; background:transparent;
+    color:var(--text2); transition:all 0.2s; letter-spacing:0.02em;
+  }
+  .currency-tabs button.active { background:var(--accent); color:#0a0b0f; }
+  .currency-tabs button:hover:not(.active) { color:var(--text); }
+
+  /* KPI grid — overflow visible so absolute cards can peek out */
+  .kpi-grid {
+    display:grid; grid-template-columns:repeat(4,1fr); gap:12px;
+    margin-bottom:32px; position:relative; overflow:visible;
+  }
+  @media(max-width:640px){ .kpi-grid { grid-template-columns:repeat(2,1fr); } }
+
+  .kpi-card {
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+    padding:18px 16px; position:relative; overflow:visible; transition:border-color 0.2s;
+  }
+  .kpi-card:hover { border-color:var(--border2); }
+  .kpi-card.highlight {
+    background:linear-gradient(135deg, rgba(127,255,176,0.08) 0%, var(--surface) 60%);
+    border-color:rgba(127,255,176,0.25);
+  }
+  .kpi-card.highlight::after {
+    content:''; position:absolute; top:0; left:0; right:0; height:2px;
+    background:linear-gradient(90deg, transparent, var(--accent), transparent);
+    border-radius:var(--radius) var(--radius) 0 0; pointer-events:none;
+  }
+  .kpi-label { font-size:10px; font-weight:700; color:var(--text3); letter-spacing:0.12em; text-transform:uppercase; margin-bottom:10px; }
+  .kpi-value { font-family:var(--mono); font-size:18px; font-weight:600; color:var(--text); letter-spacing:-0.02em; }
+  .kpi-card.highlight .kpi-value { color:var(--accent); }
+
+  /* tiny + toggle button */
+  .expand-btn {
+    position: absolute;
+    top: 8px; right: 8px;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    border: 1px solid rgba(127,255,176,0.22);
+    background: rgba(127,255,176,0.07);
+    color: rgba(127,255,176,0.45);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    font-size: 14px; line-height: 1;
+    font-family: var(--mono); font-weight: 400;
+    transition: background 0.2s, color 0.2s, border-color 0.2s, transform 0.25s;
+    z-index: 10;
+    padding: 0;
+    user-select: none;
+  }
+  .expand-btn:hover {
+    background: rgba(127,255,176,0.16);
+    color: rgba(127,255,176,0.9);
+    border-color: rgba(127,255,176,0.45);
+  }
+  .expand-btn.open { transform: rotate(45deg); color: var(--accent); background: rgba(127,255,176,0.14); border-color: rgba(127,255,176,0.45); }
+
+  /* sliding extra cards — absolutely positioned to the RIGHT of the highlight card, no layout impact */
+  .kpi-extras {
+    position: absolute;
+    /* will be positioned by JS after mount */
+    top: 0;
+    display: flex; gap: 12px;
+    pointer-events: none;
+    z-index: 5;
+  }
+
+  .kpi-extra {
+    width: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: width 0.32s cubic-bezier(0.4,0,0.2,1), opacity 0.22s, transform 0.32s cubic-bezier(0.4,0,0.2,1);
+    transform: translateX(-8px);
+    /* height will match the highlight card via JS */
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    flex-shrink: 0;
+    pointer-events: none;
+  }
+  .kpi-extras.open .kpi-extra {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: all;
+  }
+  .kpi-extra-inner {
+    padding: 18px 16px;
+    width: 100%; /* inner always full, outer clips */
+    white-space: nowrap;
+  }
+  /* stagger second card */
+  .kpi-extras.open .kpi-extra:nth-child(2) { transition-delay: 0.04s; }
+
+  .section-label {
+    font-size:11px; font-weight:700; color:var(--text3); letter-spacing:0.12em;
+    text-transform:uppercase; margin-bottom:14px; display:flex; align-items:center; gap:8px;
+  }
+  .section-label::after { content:''; flex:1; height:1px; background:var(--border); }
+
+  .card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius-lg); padding:24px; margin-bottom:24px;
+  }
+
+  .inputs-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:24px; }
+  @media(max-width:640px){ .inputs-grid { grid-template-columns:1fr 1fr; } }
+
+  .input-group { display:flex; flex-direction:column; gap:6px; }
+  .input-group label { font-size:11px; font-weight:700; color:var(--text3); letter-spacing:0.1em; text-transform:uppercase; }
+  .input-row {
+    display:flex; align-items:center; background:var(--surface2);
+    border:1px solid var(--border); border-radius:var(--radius-sm);
+    overflow:hidden; transition:border-color 0.2s;
+  }
+  .input-row:focus-within { border-color:var(--accent); }
+  .input-row input[type="number"] {
+    flex:1; background:transparent; border:none; outline:none;
+    padding:10px 12px; font-family:var(--mono); font-size:14px; font-weight:500;
+    color:var(--text); min-width:0;
+  }
+  .input-row input[type="number"]::-webkit-inner-spin-button,
+  .input-row input[type="number"]::-webkit-outer-spin-button { -webkit-appearance:none; }
+  .input-suffix { padding:0 10px; font-size:12px; font-weight:600; color:var(--text3); font-family:var(--mono); white-space:nowrap; }
+
+  .sliders-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  @media(max-width:500px){ .sliders-grid { grid-template-columns:1fr; } }
+  .slider-group { display:flex; flex-direction:column; gap:8px; }
+  .slider-header { display:flex; justify-content:space-between; align-items:center; }
+  .slider-header > span { font-size:12px; font-weight:600; color:var(--text2); }
+  .slider-val { font-family:var(--mono); font-size:13px; font-weight:600; color:var(--accent); background:var(--accent-dim); padding:2px 8px; border-radius:4px; }
+
+  input[type="range"] {
+    -webkit-appearance:none; width:100%; height:4px;
+    border-radius:2px; background:var(--surface2); outline:none; cursor:pointer;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance:none; width:16px; height:16px; border-radius:50%;
+    background:var(--accent); border:2px solid var(--bg);
+    box-shadow:0 0 8px var(--accent-glow); cursor:pointer; transition:transform 0.15s;
+  }
+  input[type="range"]::-webkit-slider-thumb:hover { transform:scale(1.2); }
+  input[type="range"]::-moz-range-thumb {
+    width:16px; height:16px; border-radius:50%;
+    background:var(--accent); border:2px solid var(--bg); cursor:pointer;
+  }
+
+  .share-note {
+    display:flex; align-items:center; gap:8px;
+    font-size:12px; color:var(--text3); font-family:var(--mono);
+    background:var(--surface2); border:1px solid var(--border);
+    border-radius:var(--radius-sm); padding:8px 14px; margin-bottom:18px;
+  }
+
+  .share-bar-outer {
+    position:relative; height:40px; background:var(--surface2);
+    border-radius:var(--radius-sm); overflow:hidden; border:1px solid var(--border);
+    margin-bottom:10px;
+  }
+  .share-seg {
+    position:absolute; top:0; bottom:0;
+    display:flex; align-items:center; padding-left:12px;
+    transition:width 0.3s ease, left 0.3s ease;
+  }
+  .share-seg.mine { background:linear-gradient(90deg, rgba(127,255,176,0.35), rgba(127,255,176,0.15)); left:0; }
+  .share-seg.rest { background:rgba(255,255,255,0.04); }
+  .seg-lbl { font-family:var(--mono); font-size:12px; font-weight:600; color:var(--text); white-space:nowrap; }
+  .seg-lbl-dim { font-family:var(--mono); font-size:11px; color:var(--text3); white-space:nowrap; }
+
+  .results-section {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius-lg); overflow:hidden; margin-bottom:24px;
+  }
+  .results-header {
+    display:grid; grid-template-columns:1.2fr 1fr 1fr;
+    padding:12px 20px; background:var(--surface2); border-bottom:1px solid var(--border);
+    font-size:10px; font-weight:700; color:var(--text3); letter-spacing:0.12em; text-transform:uppercase;
+  }
+  .results-header span:not(:first-child) { text-align:right; }
+  .result-row {
+    display:grid; grid-template-columns:1.2fr 1fr 1fr;
+    padding:14px 20px; border-bottom:1px solid var(--border);
+    transition:background 0.15s; align-items:center;
+  }
+  .result-row:last-child { border-bottom:none; }
+  .result-row:hover { background:rgba(255,255,255,0.02); }
+  .result-row.featured {
+    background:rgba(127,255,176,0.04);
+    border-left:3px solid var(--accent); padding-left:17px;
+  }
+  .result-row.featured:hover { background:rgba(127,255,176,0.07); }
+  .row-label { font-size:13px; font-weight:600; color:var(--text2); display:flex; align-items:center; gap:8px; }
+  .featured .row-label { color:var(--text); }
+  .row-label .badge {
+    font-size:9px; font-weight:700; letter-spacing:0.08em;
+    background:var(--accent-dim); color:var(--accent);
+    padding:2px 6px; border-radius:4px; text-transform:uppercase;
+  }
+  .row-gross { font-family:var(--mono); font-size:13px; color:var(--text3); text-align:right; }
+  .row-mine { font-family:var(--mono); font-size:14px; font-weight:700; color:var(--accent); text-align:right; }
+  .result-row:not(.featured) .row-mine { font-size:13px; font-weight:500; color:var(--text2); }
+
+  .footnotes { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+  .fn-chip {
+    display:inline-flex; align-items:center; gap:5px; font-size:11px; color:var(--text3);
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:6px; padding:4px 10px; font-family:var(--mono);
+  }
+  .fn-chip span { color:var(--text2); }
+
+  ::-webkit-scrollbar { width:6px; }
+  ::-webkit-scrollbar-track { background:var(--bg); }
+  ::-webkit-scrollbar-thumb { background:var(--border2); border-radius:3px; }
+</style>
+</head>
+<body>
+
+<div class="glow-blob g1"></div>
+<div class="glow-blob g2"></div>
+
+<div class="container">
+
+  <div class="header">
+    <div class="header-badge">Roblox Gelir Hesaplayıcı</div>
+    <h1>Dream League<br><span>Gelir Tahmini</span></h1>
+    <p class="header-sub">CCU, ARPDAU ve payına göre günlük · aylık · yıllık kazancını hesapla.</p>
+  </div>
+
+  <div class="currency-tabs">
+    <button class="active" onclick="setCurrency('robux')">Robux (R$)</button>
+    <button onclick="setCurrency('usd')">Dolar ($)</button>
+    <button onclick="setCurrency('tl')">TL (₺)</button>
+  </div>
+
+  <div class="kpi-grid" id="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-label">CCU</div>
+      <div class="kpi-value" id="disp-ccu">3,000</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">DAU</div>
+      <div class="kpi-value" id="disp-dau">90,000</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">ARPDAU</div>
+      <div class="kpi-value" id="disp-arpdau">15 R$</div>
+    </div>
+    <div class="kpi-card highlight" id="highlight-card">
+      <div class="kpi-label">Aylık Payın</div>
+      <div class="kpi-value" id="disp-monthly">–</div>
+      <button class="expand-btn" id="expand-btn" onclick="toggleExtras()">+</button>
+    </div>
+
+    <!-- absolute sliding extras, positioned by JS -->
+    <div class="kpi-extras" id="kpi-extras">
+      <div class="kpi-extra" id="extra-1">
+        <div class="kpi-extra-inner">
+          <div class="kpi-label" id="extra-lbl-1">–</div>
+          <div class="kpi-value" id="extra-val-1">–</div>
+        </div>
+      </div>
+      <div class="kpi-extra" id="extra-2">
+        <div class="kpi-extra-inner">
+          <div class="kpi-label" id="extra-lbl-2">–</div>
+          <div class="kpi-value" id="extra-val-2">–</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-label">Parametreler</div>
+    <div class="inputs-grid">
+      <div class="input-group">
+        <label>CCU</label>
+        <div class="input-row">
+          <input type="number" id="inp-ccu" value="3000" min="1" max="999999">
+          <span class="input-suffix">oyuncu</span>
+        </div>
+      </div>
+      <div class="input-group">
+        <label>ARPDAU</label>
+        <div class="input-row">
+          <input type="number" id="inp-arpdau" value="15" min="0.01" step="0.01">
+          <span class="input-suffix">R$</span>
+        </div>
+      </div>
+      <div class="input-group">
+        <label>DAU Çarpanı</label>
+        <div class="input-row">
+          <input type="number" id="inp-daumult" value="30" min="1" max="200">
+          <span class="input-suffix">× CCU</span>
+        </div>
+      </div>
+    </div>
+    <div class="section-label" style="margin-top:4px;">Slider ile Hızlı Ayar</div>
+    <div class="sliders-grid">
+      <div class="slider-group">
+        <div class="slider-header">
+          <span>CCU (500 → 20,000)</span>
+          <span class="slider-val" id="lbl-ccu">3,000</span>
+        </div>
+        <input type="range" min="500" max="20000" step="100" value="3000" id="sl-ccu">
+      </div>
+      <div class="slider-group">
+        <div class="slider-header">
+          <span>ARPDAU (1 → 30 R$)</span>
+          <span class="slider-val" id="lbl-arpdau">15 R$</span>
+        </div>
+        <input type="range" min="1" max="30" step="1" value="15" id="sl-arpdau">
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-label">Payın</div>
+    <div class="share-note">Toplam gelirin ne kadarı sana ait?</div>
+    <div class="share-bar-outer">
+      <div class="share-seg mine" id="bar-mine" style="width:70%">
+        <span class="seg-lbl" id="bar-mine-lbl">Sen %70</span>
+      </div>
+      <div class="share-seg rest" id="bar-rest" style="left:70%; width:0%; display:none">
+        <span class="seg-lbl-dim" id="bar-rest-lbl"></span>
+      </div>
+    </div>
+    <div class="slider-group">
+      <div class="slider-header">
+        <span>Bana kalan pay (toplam gelirden)</span>
+        <span class="slider-val" id="lbl-myshare">100%</span>
+      </div>
+      <input type="range" min="1" max="100" step="1" value="100" id="sl-myshare">
+    </div>
+  </div>
+
+  <div class="results-section">
+    <div class="results-header">
+      <span>Dönem</span>
+      <span>Brüt Gelir</span>
+      <span>Senin Payın</span>
+    </div>
+    <div id="tbl"></div>
+  </div>
+
+  <div class="footnotes">
+    <div class="fn-chip">DAU = CCU × <span id="fn-daumult">30</span></div>
+    <div class="fn-chip">DevEx: 1,000 R$ = <span>$3.80</span></div>
+    <div class="fn-chip">$1 = <span>44₺</span></div>
+    <div class="fn-chip">Senin payın: <span id="fn-mypct">%100</span></div>
+  </div>
+
+</div>
+
+<script>
+  const DEVEX = 3.80 / 1000;
+  const KUR = 44;
+  let currency = 'robux';
+  let extrasOpen = false;
+  const EXTRA_W = 140; // px width of each extra card
+
+  function positionExtras() {
+    const card   = document.getElementById('highlight-card');
+    const extras = document.getElementById('kpi-extras');
+    const rect   = card.getBoundingClientRect();
+    const gridRect = document.getElementById('kpi-grid').getBoundingClientRect();
+    extras.style.left   = (rect.right - gridRect.left + 12) + 'px';
+    extras.style.top    = (rect.top  - gridRect.top) + 'px';
+    extras.style.height = rect.height + 'px';
+    // match extra card heights
+    document.querySelectorAll('.kpi-extra').forEach(el => {
+      el.style.height = rect.height + 'px';
+    });
+  }
+
+  function toggleExtras() {
+    extrasOpen = !extrasOpen;
+    positionExtras();
+    const extras = document.getElementById('kpi-extras');
+    const btn    = document.getElementById('expand-btn');
+    extras.classList.toggle('open', extrasOpen);
+    btn.classList.toggle('open', extrasOpen);
+    if (extrasOpen) {
+      document.getElementById('extra-1').style.width = EXTRA_W + 'px';
+      document.getElementById('extra-2').style.width = EXTRA_W + 'px';
+    } else {
+      document.getElementById('extra-1').style.width = '0';
+      document.getElementById('extra-2').style.width = '0';
+    }
+  }
+
+  window.addEventListener('resize', () => { if (extrasOpen) positionExtras(); });
+
+  function getVal(id) { return parseFloat(document.getElementById(id).value) || 0; }
+  function setVal(id, v) { document.getElementById(id).value = v; }
+  function fmt(n) { return Math.round(n).toLocaleString('tr-TR'); }
+  function fmtF(n, d=2) { return n.toLocaleString('tr-TR', {minimumFractionDigits:d, maximumFractionDigits:d}); }
+
+  function convertRobux(robux, cur) {
+    if (cur === 'robux') return fmt(robux) + ' R$';
+    const usd = robux * DEVEX;
+    if (cur === 'usd') return usd >= 1000 ? '$' + fmt(Math.round(usd)) : '$' + fmtF(usd);
+    return fmt(Math.round(usd * KUR)) + ' ₺';
+  }
+
+  function convert(robux) { return convertRobux(robux, currency); }
+
+  function getAltCurrencies() {
+    if (currency === 'robux') return [['usd','Dolar ($)'],['tl','TL (₺)']];
+    if (currency === 'usd')   return [['robux','Robux (R$)'],['tl','TL (₺)']];
+    return [['usd','Dolar ($)'],['robux','Robux (R$)']];
+  }
+
+  function setCurrency(c) {
+    currency = c;
+    document.querySelectorAll('.currency-tabs button').forEach((btn,i) => {
+      btn.classList.toggle('active', ['robux','usd','tl'][i] === c);
+    });
+    update();
+  }
+
+  document.getElementById('sl-ccu').addEventListener('input', function() { setVal('inp-ccu', this.value); update(); });
+  document.getElementById('sl-arpdau').addEventListener('input', function() { setVal('inp-arpdau', this.value); update(); });
+  document.getElementById('inp-ccu').addEventListener('input', function() {
+    document.getElementById('sl-ccu').value = Math.min(20000, Math.max(500, parseFloat(this.value)||0));
+    update();
+  });
+  document.getElementById('inp-arpdau').addEventListener('input', function() {
+    document.getElementById('sl-arpdau').value = Math.min(100, Math.max(1, parseFloat(this.value)||0));
+    update();
+  });
+  document.getElementById('sl-myshare').addEventListener('input', update);
+  document.getElementById('inp-daumult').addEventListener('input', update);
+
+  function update() {
+    const ccu        = getVal('inp-ccu');
+    const arpdau     = getVal('inp-arpdau');
+    const dauMult    = getVal('inp-daumult') || 30;
+    const mySharePct = parseInt(document.getElementById('sl-myshare').value);
+    const dau        = ccu * dauMult;
+
+    document.getElementById('lbl-ccu').textContent     = fmt(ccu);
+    document.getElementById('sl-ccu').value            = Math.min(20000, Math.max(500, ccu));
+    document.getElementById('lbl-arpdau').textContent  = arpdau + ' R$';
+    document.getElementById('sl-arpdau').value         = Math.min(100, Math.max(1, arpdau));
+    document.getElementById('lbl-myshare').textContent = mySharePct + '%';
+
+    const myBarW = mySharePct, restBarW = 100 - mySharePct;
+    document.getElementById('bar-mine').style.width = myBarW + '%';
+    document.getElementById('bar-mine-lbl').textContent = 'Sen %' + myBarW;
+    const restEl = document.getElementById('bar-rest');
+    if (restBarW > 0) {
+      restEl.style.display = '';
+      restEl.style.left  = myBarW + '%';
+      restEl.style.width = restBarW + '%';
+      document.getElementById('bar-rest-lbl').textContent = 'Diğer %' + restBarW;
+    } else { restEl.style.display = 'none'; }
+
+    document.getElementById('disp-ccu').textContent    = fmt(ccu);
+    document.getElementById('disp-dau').textContent    = fmt(dau);
+    document.getElementById('disp-arpdau').textContent = arpdau + ' R$';
+
+    const factor       = mySharePct / 100;
+    const dailyGross   = dau * arpdau;
+    const monthlyGross = dailyGross * 30;
+    const yearlyGross  = dailyGross * 365;
+    const dailyMine    = dailyGross   * factor;
+    const monthlyMine  = monthlyGross * factor;
+    const yearlyMine   = yearlyGross  * factor;
+
+    document.getElementById('disp-monthly').textContent = convert(monthlyMine);
+
+    const alts = getAltCurrencies();
+    document.getElementById('extra-lbl-1').textContent = alts[0][1];
+    document.getElementById('extra-lbl-2').textContent = alts[1][1];
+    document.getElementById('extra-val-1').textContent = convertRobux(monthlyMine, alts[0][0]);
+    document.getElementById('extra-val-2').textContent = convertRobux(monthlyMine, alts[1][0]);
+
+    document.getElementById('fn-daumult').textContent = dauMult;
+    document.getElementById('fn-mypct').textContent   = '%' + mySharePct;
+
+    const rows = [
+      { label:'Günlük',  gross:dailyGross,   mine:dailyMine,   featured:false },
+      { label:'Aylık',   gross:monthlyGross, mine:monthlyMine, featured:true  },
+      { label:'Yıllık',  gross:yearlyGross,  mine:yearlyMine,  featured:false },
+    ];
+
+    document.getElementById('tbl').innerHTML = rows.map(r => `
+      <div class="result-row ${r.featured ? 'featured' : ''}">
+        <span class="row-label">${r.label}${r.featured ? '<span class="badge">en önemli</span>' : ''}</span>
+        <span class="row-gross">${convert(r.gross)}</span>
+        <span class="row-mine">${convert(r.mine)}</span>
+      </div>
+    `).join('');
+  }
+
+  update();
+</script>
+</body>
+</html>
