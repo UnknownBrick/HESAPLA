@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="tr" data-theme="default">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,15 +7,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0a0b0f;
-    --surface: #111318;
-    --surface2: #181b22;
     --border: rgba(255,255,255,0.07);
     --border2: rgba(255,255,255,0.12);
-    --accent: #ffffff;
-    --accent-dim: rgba(255,255,255,0.12);
-    --accent-glow: rgba(255,255,255,0.25);
-    --bjk-red: #e30613;
     --text: #f0f2f5;
     --text2: #8b92a0;
     --text3: #555d6b;
@@ -24,6 +17,58 @@
     --radius-lg: 16px;
     --font: 'Syne', sans-serif;
     --mono: 'JetBrains Mono', monospace;
+    --action-red: #e30613;
+
+    /* accent-dim / glow türetilmiş (accent-rgb temaya göre değişir) */
+    --accent-dim: rgba(var(--accent-rgb), 0.12);
+    --accent-glow: rgba(var(--accent-rgb), 0.28);
+  }
+
+  /* ================= TEMALAR ================= */
+  /* 1) Varsayılan (orijinal yeşil) */
+  :root[data-theme="default"] {
+    --bg: #0a0b0f;
+    --surface: #111318;
+    --surface2: #181b22;
+    --accent: #7fffb0;
+    --accent-rgb: 127,255,176;
+    --accent-contrast: #0a0b0f;
+    --glow1: rgba(127,255,176,0.06);
+    --glow2: rgba(239,108,65,0.05);
+  }
+  /* 2) Beşiktaş (siyah-beyaz + kırmızı) */
+  :root[data-theme="besiktas"] {
+    --bg: #08090c;
+    --surface: #121317;
+    --surface2: #1a1c21;
+    --accent: #ffffff;
+    --accent-rgb: 255,255,255;
+    --accent-contrast: #0a0b0f;
+    --glow1: rgba(255,255,255,0.06);
+    --glow2: rgba(227,6,19,0.15);
+    --float2: rgba(227,6,19,0.11);
+  }
+  :root[data-theme="besiktas"] .club-stripes {
+    background:repeating-linear-gradient(45deg,
+      rgba(255,255,255,0.05) 0px, rgba(255,255,255,0.05) 34px,
+      transparent 34px, transparent 68px);
+  }
+  /* 3) Galatasaray (sarı-kırmızı) */
+  :root[data-theme="galatasaray"] {
+    --bg: #0c0806;
+    --surface: #17110d;
+    --surface2: #201811;
+    --accent: #f7c948;
+    --accent-rgb: 247,201,72;
+    --accent-contrast: #2a0a06;
+    --glow1: rgba(247,201,72,0.09);
+    --glow2: rgba(169,4,50,0.17);
+    --float2: rgba(169,4,50,0.13);
+  }
+  :root[data-theme="galatasaray"] .club-stripes {
+    background:repeating-linear-gradient(45deg,
+      rgba(169,4,50,0.08) 0px, rgba(169,4,50,0.08) 34px,
+      rgba(247,201,72,0.05) 34px, rgba(247,201,72,0.05) 68px);
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -35,6 +80,7 @@
     min-height: 100vh;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
+    transition: background 0.3s;
   }
 
   body::before {
@@ -44,34 +90,40 @@
     opacity: 0.025; pointer-events: none; z-index: 9999;
   }
 
-  /* ===== BEŞİKTAŞ TEMA — arkaplan çubukları ve süzülen öğeler ===== */
-  /* siyah-beyaz diyagonal çubuklar (Kara Kartal forması) */
-  .bjk-stripes {
+  /* ===== Kulüp arkaplanı (sadece kulüp temalarında) ===== */
+  .club-stripes, .club-field, .club-watermark { display:none; }
+  :root[data-theme="besiktas"] .club-stripes,
+  :root[data-theme="besiktas"] .club-field,
+  :root[data-theme="besiktas"] .club-watermark,
+  :root[data-theme="galatasaray"] .club-stripes,
+  :root[data-theme="galatasaray"] .club-field,
+  :root[data-theme="galatasaray"] .club-watermark { display:block; }
+
+  .club-stripes {
     position:fixed; inset:-20%; z-index:0; pointer-events:none;
-    background:repeating-linear-gradient(
-      45deg,
-      rgba(255,255,255,0.035) 0px,
-      rgba(255,255,255,0.035) 34px,
-      transparent 34px,
-      transparent 68px
-    );
-    animation:bjk-stripes-move 18s linear infinite;
+    animation:stripes-move 18s linear infinite;
   }
-  @keyframes bjk-stripes-move {
+  @keyframes stripes-move {
     from { transform:translate(0,0); }
     to   { transform:translate(68px,-68px); }
   }
 
-  /* sürekli yukarı süzülen kartal / BJK öğeleri */
-  .bjk-field { position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden; }
-  .bjk-float {
+  .club-watermark {
+    position:fixed; top:50%; left:50%; z-index:0; pointer-events:none;
+    width:min(70vw,600px); height:min(70vw,600px);
+    transform:translate(-50%,-50%);
+    background:center/contain no-repeat; opacity:0.055;
+  }
+
+  .club-field { position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden; }
+  .club-float {
     position:absolute; bottom:-120px;
     font-family:var(--font); font-weight:800; letter-spacing:0.04em;
-    color:rgba(255,255,255,0.05); user-select:none; white-space:nowrap;
-    animation:bjk-rise linear infinite;
+    color:rgba(var(--accent-rgb),0.05); user-select:none; white-space:nowrap;
+    animation:club-rise linear infinite;
   }
-  .bjk-float.red { color:rgba(227,6,19,0.10); }
-  @keyframes bjk-rise {
+  .club-float.alt { color:var(--float2); }
+  @keyframes club-rise {
     0%   { transform:translateY(0) rotate(-4deg);   opacity:0; }
     10%  { opacity:1; }
     90%  { opacity:1; }
@@ -79,15 +131,15 @@
   }
 
   .glow-blob { position:fixed; border-radius:50%; filter:blur(120px); pointer-events:none; z-index:0; }
-  .glow-blob.g1 { width:500px; height:500px; background:rgba(255,255,255,0.06); top:-150px; right:-100px; }
-  .glow-blob.g2 { width:400px; height:400px; background:rgba(227,6,19,0.12); bottom:-100px; left:-100px; }
+  .glow-blob.g1 { width:500px; height:500px; background:var(--glow1); top:-150px; right:-100px; }
+  .glow-blob.g2 { width:400px; height:400px; background:var(--glow2); bottom:-100px; left:-100px; }
 
   .container { position:relative; z-index:1; max-width:860px; margin:0 auto; padding:48px 24px 80px; }
 
-  .header { margin-bottom: 48px; }
+  .header { margin-bottom: 28px; }
   .header-badge {
     display:inline-flex; align-items:center; gap:6px;
-    background:var(--accent-dim); border:1px solid rgba(255,255,255,0.2);
+    background:var(--accent-dim); border:1px solid rgba(var(--accent-rgb),0.2);
     border-radius:100px; padding:4px 12px; font-size:11px; font-weight:600;
     color:var(--accent); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:16px;
   }
@@ -99,45 +151,47 @@
   h1 { font-size:clamp(28px,5vw,44px); font-weight:800; letter-spacing:-0.03em; line-height:1.1; }
   h1 span { color:var(--accent); }
   .header-sub { margin-top:10px; font-size:14px; color:var(--text2); font-weight:400; }
+  .header-sub strong { color:var(--text); }
 
-  .currency-tabs {
+  /* ===== Tema seçici ===== */
+  .tabs-label { font-size:10px; font-weight:700; color:var(--text3); letter-spacing:0.12em; text-transform:uppercase; margin-bottom:8px; }
+  .theme-tabs, .currency-tabs {
     display:flex; gap:6px; background:var(--surface); border:1px solid var(--border);
-    border-radius:var(--radius); padding:5px; width:fit-content; margin-bottom:32px;
+    border-radius:var(--radius); padding:5px; width:fit-content;
   }
-  .currency-tabs button {
+  .theme-tabs { margin-bottom:24px; flex-wrap:wrap; }
+  .currency-tabs { margin-bottom:32px; }
+  .theme-tabs button, .currency-tabs button {
     padding:7px 20px; font-size:13px; font-family:var(--font); font-weight:600;
     border-radius:var(--radius-sm); border:none; cursor:pointer; background:transparent;
     color:var(--text2); transition:all 0.2s; letter-spacing:0.02em;
   }
-  .currency-tabs button.active { background:var(--accent); color:#0a0b0f; }
-  .currency-tabs button:hover:not(.active) { color:var(--text); }
+  .theme-tabs button.active, .currency-tabs button.active { background:var(--accent); color:var(--accent-contrast); }
+  .theme-tabs button:hover:not(.active), .currency-tabs button:hover:not(.active) { color:var(--text); }
 
-  /* ===== Güncel kur çekme ===== */
-  .kur-row {
-    display:flex; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:32px;
+  /* ===== Kulüp paneli (logo + maç/highlight galerisi) ===== */
+  .club-panel {
+    display:none; align-items:center; gap:18px;
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg);
+    padding:16px 18px; margin-bottom:24px; position:relative; overflow:hidden; flex-wrap:wrap;
   }
-  .kur-btn {
-    display:inline-flex; align-items:center; gap:8px;
-    padding:9px 18px; font-family:var(--font); font-size:13px; font-weight:700;
-    letter-spacing:0.02em; cursor:pointer;
-    color:#fff; background:var(--bjk-red);
-    border:1px solid rgba(227,6,19,0.6); border-radius:var(--radius-sm);
-    transition:filter 0.2s, transform 0.1s, opacity 0.2s;
-    box-shadow:0 0 18px rgba(227,6,19,0.25);
+  :root[data-theme="besiktas"] .club-panel,
+  :root[data-theme="galatasaray"] .club-panel { display:flex; }
+  .club-logo {
+    width:64px; height:64px; object-fit:contain; flex-shrink:0;
+    filter:drop-shadow(0 0 12px rgba(var(--accent-rgb),0.35));
   }
-  .kur-btn:hover:not(:disabled) { filter:brightness(1.12); }
-  .kur-btn:active:not(:disabled) { transform:translateY(1px); }
-  .kur-btn:disabled { opacity:0.6; cursor:progress; }
-  .kur-btn .ico { display:inline-block; font-size:14px; line-height:1; }
-  .kur-btn.loading .ico { animation:spin 0.8s linear infinite; }
-  @keyframes spin { to { transform:rotate(360deg); } }
-  .kur-status {
-    font-family:var(--mono); font-size:12px; color:var(--text2);
-    background:var(--surface); border:1px solid var(--border);
-    border-radius:var(--radius-sm); padding:8px 14px;
+  .club-logo:not([src]) { display:none; }
+  .club-info { flex:1; min-width:200px; }
+  .club-name { font-weight:800; font-size:18px; letter-spacing:-0.01em; }
+  .club-gallery-lbl { font-size:10px; font-weight:700; color:var(--text3); letter-spacing:0.12em; text-transform:uppercase; margin:8px 0 6px; }
+  .club-gallery { display:flex; gap:8px; overflow-x:auto; padding-bottom:4px; }
+  .club-gallery img {
+    height:66px; border-radius:8px; border:1px solid var(--border);
+    object-fit:cover; flex-shrink:0; background:var(--surface2);
   }
-  .kur-status.ok { color:var(--accent); border-color:var(--border2); }
-  .kur-status.err { color:#ff8b8b; border-color:rgba(227,6,19,0.4); }
+  .club-gallery::-webkit-scrollbar { height:5px; }
+  .club-gallery::-webkit-scrollbar-thumb { background:var(--border2); border-radius:3px; }
 
   /* KPI grid — overflow visible so absolute cards can peek out */
   .kpi-grid {
@@ -152,8 +206,8 @@
   }
   .kpi-card:hover { border-color:var(--border2); }
   .kpi-card.highlight {
-    background:linear-gradient(135deg, rgba(255,255,255,0.08) 0%, var(--surface) 60%);
-    border-color:rgba(255,255,255,0.25);
+    background:linear-gradient(135deg, rgba(var(--accent-rgb),0.08) 0%, var(--surface) 60%);
+    border-color:rgba(var(--accent-rgb),0.25);
   }
   .kpi-card.highlight::after {
     content:''; position:absolute; top:0; left:0; right:0; height:2px;
@@ -170,9 +224,9 @@
     top: 8px; right: 8px;
     width: 18px; height: 18px;
     border-radius: 50%;
-    border: 1px solid rgba(255,255,255,0.22);
-    background: rgba(255,255,255,0.07);
-    color: rgba(255,255,255,0.45);
+    border: 1px solid rgba(var(--accent-rgb),0.22);
+    background: rgba(var(--accent-rgb),0.07);
+    color: rgba(var(--accent-rgb),0.55);
     display: flex; align-items: center; justify-content: center;
     cursor: pointer;
     font-size: 14px; line-height: 1;
@@ -183,46 +237,27 @@
     user-select: none;
   }
   .expand-btn:hover {
-    background: rgba(255,255,255,0.16);
-    color: rgba(255,255,255,0.9);
-    border-color: rgba(255,255,255,0.45);
+    background: rgba(var(--accent-rgb),0.16);
+    color: rgba(var(--accent-rgb),0.95);
+    border-color: rgba(var(--accent-rgb),0.45);
   }
-  .expand-btn.open { transform: rotate(45deg); color: var(--accent); background: rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.45); }
+  .expand-btn.open { transform: rotate(45deg); color: var(--accent); background: rgba(var(--accent-rgb),0.14); border-color: rgba(var(--accent-rgb),0.45); }
 
-  /* sliding extra cards — absolutely positioned to the RIGHT of the highlight card, no layout impact */
+  /* sliding extra cards */
   .kpi-extras {
-    position: absolute;
-    /* will be positioned by JS after mount */
-    top: 0;
+    position: absolute; top: 0;
     display: flex; gap: 12px;
-    pointer-events: none;
-    z-index: 5;
+    pointer-events: none; z-index: 5;
   }
-
   .kpi-extra {
-    width: 0;
-    overflow: hidden;
-    opacity: 0;
+    width: 0; overflow: hidden; opacity: 0;
     transition: width 0.32s cubic-bezier(0.4,0,0.2,1), opacity 0.22s, transform 0.32s cubic-bezier(0.4,0,0.2,1);
     transform: translateX(-8px);
-    /* height will match the highlight card via JS */
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    flex-shrink: 0;
-    pointer-events: none;
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    flex-shrink: 0; pointer-events: none;
   }
-  .kpi-extras.open .kpi-extra {
-    opacity: 1;
-    transform: translateX(0);
-    pointer-events: all;
-  }
-  .kpi-extra-inner {
-    padding: 18px 16px;
-    width: 100%; /* inner always full, outer clips */
-    white-space: nowrap;
-  }
-  /* stagger second card */
+  .kpi-extras.open .kpi-extra { opacity: 1; transform: translateX(0); pointer-events: all; }
+  .kpi-extra-inner { padding: 18px 16px; width: 100%; white-space: nowrap; }
   .kpi-extras.open .kpi-extra:nth-child(2) { transition-delay: 0.04s; }
 
   .section-label {
@@ -295,7 +330,7 @@
     display:flex; align-items:center; padding-left:12px;
     transition:width 0.3s ease, left 0.3s ease;
   }
-  .share-seg.mine { background:linear-gradient(90deg, rgba(255,255,255,0.35), rgba(255,255,255,0.15)); left:0; }
+  .share-seg.mine { background:linear-gradient(90deg, rgba(var(--accent-rgb),0.35), rgba(var(--accent-rgb),0.15)); left:0; }
   .share-seg.rest { background:rgba(255,255,255,0.04); }
   .seg-lbl { font-family:var(--mono); font-size:12px; font-weight:600; color:var(--text); white-space:nowrap; }
   .seg-lbl-dim { font-family:var(--mono); font-size:11px; color:var(--text3); white-space:nowrap; }
@@ -318,10 +353,10 @@
   .result-row:last-child { border-bottom:none; }
   .result-row:hover { background:rgba(255,255,255,0.02); }
   .result-row.featured {
-    background:rgba(255,255,255,0.04);
+    background:rgba(var(--accent-rgb),0.04);
     border-left:3px solid var(--accent); padding-left:17px;
   }
-  .result-row.featured:hover { background:rgba(255,255,255,0.07); }
+  .result-row.featured:hover { background:rgba(var(--accent-rgb),0.07); }
   .row-label { font-size:13px; font-weight:600; color:var(--text2); display:flex; align-items:center; gap:8px; }
   .featured .row-label { color:var(--text); }
   .row-label .badge {
@@ -333,13 +368,41 @@
   .row-mine { font-family:var(--mono); font-size:14px; font-weight:700; color:var(--accent); text-align:right; }
   .result-row:not(.featured) .row-mine { font-size:13px; font-weight:500; color:var(--text2); }
 
-  .footnotes { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+  .footnotes { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; margin-bottom:24px; }
   .fn-chip {
     display:inline-flex; align-items:center; gap:5px; font-size:11px; color:var(--text3);
     background:var(--surface); border:1px solid var(--border);
     border-radius:6px; padding:4px 10px; font-family:var(--mono);
   }
   .fn-chip span { color:var(--text2); }
+
+  /* ===== Güncel kur çekme (en altta) ===== */
+  .kur-row {
+    display:flex; align-items:center; flex-wrap:wrap; gap:12px;
+    padding-top:20px; border-top:1px solid var(--border);
+  }
+  .kur-btn {
+    display:inline-flex; align-items:center; gap:8px;
+    padding:11px 20px; font-family:var(--font); font-size:14px; font-weight:700;
+    letter-spacing:0.02em; cursor:pointer;
+    color:#fff; background:var(--action-red);
+    border:1px solid rgba(227,6,19,0.6); border-radius:var(--radius-sm);
+    transition:filter 0.2s, transform 0.1s, opacity 0.2s;
+    box-shadow:0 0 18px rgba(227,6,19,0.25);
+  }
+  .kur-btn:hover:not(:disabled) { filter:brightness(1.12); }
+  .kur-btn:active:not(:disabled) { transform:translateY(1px); }
+  .kur-btn:disabled { opacity:0.6; cursor:progress; }
+  .kur-btn .ico { display:inline-block; font-size:15px; line-height:1; }
+  .kur-btn.loading .ico { animation:spin 0.8s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .kur-status {
+    font-family:var(--mono); font-size:12px; color:var(--text2);
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius-sm); padding:9px 14px;
+  }
+  .kur-status.ok { color:var(--accent); border-color:var(--border2); }
+  .kur-status.err { color:#ff8b8b; border-color:rgba(227,6,19,0.4); }
 
   ::-webkit-scrollbar { width:6px; }
   ::-webkit-scrollbar-track { background:var(--bg); }
@@ -348,9 +411,10 @@
 </head>
 <body>
 
-<!-- Beşiktaş arkaplan -->
-<div class="bjk-stripes"></div>
-<div class="bjk-field" id="bjk-field"></div>
+<!-- Tema arkaplanı -->
+<div class="club-stripes"></div>
+<div class="club-watermark" id="club-watermark"></div>
+<div class="club-field" id="club-field"></div>
 
 <div class="glow-blob g1"></div>
 <div class="glow-blob g2"></div>
@@ -358,22 +422,33 @@
 <div class="container">
 
   <div class="header">
-    <div class="header-badge">🦅 Kara Kartal · Roblox Gelir Hesaplayıcı</div>
+    <div class="header-badge" id="header-badge">Roblox Gelir Hesaplayıcı</div>
     <h1>Roblox<br><span>Gelir Tahmini</span></h1>
-    <p class="header-sub">CCU, ARPDAU ve payına göre günlük · aylık · yıllık kazancını hesapla. <strong style="color:#fff">Beşiktaş 1903</strong> ⚫⚪</p>
+    <p class="header-sub">CCU, ARPDAU ve payına göre günlük · aylık · yıllık kazancını hesapla. <strong id="club-tagline"></strong></p>
   </div>
 
+  <div class="tabs-label">Tema</div>
+  <div class="theme-tabs">
+    <button data-th="default" class="active" onclick="setTheme('default')">Varsayılan</button>
+    <button data-th="besiktas" onclick="setTheme('besiktas')">Beşiktaş</button>
+    <button data-th="galatasaray" onclick="setTheme('galatasaray')">Galatasaray</button>
+  </div>
+
+  <!-- Kulüp paneli: logo + maç/highlight görselleri -->
+  <div class="club-panel" id="club-panel">
+    <img class="club-logo" id="club-logo" alt="logo">
+    <div class="club-info">
+      <div class="club-name" id="club-name">Yükleniyor…</div>
+      <div class="club-gallery-lbl">Maç / Highlight</div>
+      <div class="club-gallery" id="club-gallery"></div>
+    </div>
+  </div>
+
+  <div class="tabs-label">Para birimi</div>
   <div class="currency-tabs">
     <button class="active" onclick="setCurrency('robux')">Robux (R$)</button>
     <button onclick="setCurrency('usd')">Dolar ($)</button>
     <button onclick="setCurrency('tl')">TL (₺)</button>
-  </div>
-
-  <div class="kur-row">
-    <button class="kur-btn" id="kur-btn" onclick="fetchKur()">
-      <span class="ico">↻</span> Güncel Kuru Çek
-    </button>
-    <span class="kur-status" id="kur-status">$1 = 44₺ · varsayılan</span>
   </div>
 
   <div class="kpi-grid" id="kpi-grid">
@@ -395,7 +470,6 @@
       <button class="expand-btn" id="expand-btn" onclick="toggleExtras()">+</button>
     </div>
 
-    <!-- absolute sliding extras, positioned by JS -->
     <div class="kpi-extras" id="kpi-extras">
       <div class="kpi-extra" id="extra-1">
         <div class="kpi-extra-inner">
@@ -492,6 +566,14 @@
     <div class="fn-chip">Senin payın: <span id="fn-mypct">%100</span></div>
   </div>
 
+  <!-- Güncel kur çekme — en altta -->
+  <div class="kur-row">
+    <button class="kur-btn" id="kur-btn" onclick="fetchKur()">
+      <span class="ico">↻</span> Güncel Kuru Çek
+    </button>
+    <span class="kur-status" id="kur-status">$1 = 44₺ · varsayılan</span>
+  </div>
+
 </div>
 
 <script>
@@ -499,9 +581,109 @@
   let KUR = 44;
   let currency = 'robux';
   let extrasOpen = false;
-  const EXTRA_W = 140; // px width of each extra card
+  const EXTRA_W = 140;
 
-  // ===== Güncel kur çekme (USD -> TRY) =====
+  function fmt(n) { return Math.round(n).toLocaleString('tr-TR'); }
+  function fmtF(n, d=2) { return n.toLocaleString('tr-TR', {minimumFractionDigits:d, maximumFractionDigits:d}); }
+
+  // ================= TEMA =================
+  const THEMES = {
+    default: {
+      badge: 'Roblox Gelir Hesaplayıcı',
+      tagline: '',
+      words: []
+    },
+    besiktas: {
+      badge: '🦅 Kara Kartal · Roblox Gelir Hesaplayıcı',
+      tagline: 'Beşiktaş 1903 ⚫⚪',
+      query: 'Besiktas',
+      words: ['🦅','BJK','1903','BEŞİKTAŞ','⚫⚪','KARA KARTAL','ÇARŞI']
+    },
+    galatasaray: {
+      badge: '🦁 Cim Bom · Roblox Gelir Hesaplayıcı',
+      tagline: 'Galatasaray 1905 🔴🟡',
+      query: 'Galatasaray',
+      words: ['🦁','GS','1905','GALATASARAY','🔴🟡','CİM BOM','ULTRASLAN','ASLAN']
+    }
+  };
+  const clubCache = {};
+
+  function setTheme(t) {
+    if (!THEMES[t]) t = 'default';
+    document.documentElement.setAttribute('data-theme', t);
+    document.querySelectorAll('.theme-tabs button').forEach(b => {
+      b.classList.toggle('active', b.dataset.th === t);
+    });
+    document.getElementById('header-badge').textContent = THEMES[t].badge;
+    document.getElementById('club-tagline').textContent = THEMES[t].tagline;
+    buildClubField(t);
+    if (t === 'besiktas' || t === 'galatasaray') loadClub(t);
+    try { localStorage.setItem('hesapla-theme', t); } catch(e) {}
+    if (extrasOpen) positionExtras();
+  }
+
+  function buildClubField(t) {
+    const field = document.getElementById('club-field');
+    field.innerHTML = '';
+    const words = THEMES[t].words;
+    if (!words.length) return;
+    for (let i = 0; i < 16; i++) {
+      const el = document.createElement('span');
+      el.className = 'club-float' + (Math.random() < 0.32 ? ' alt' : '');
+      el.textContent = words[Math.floor(Math.random() * words.length)];
+      el.style.left = (Math.random() * 100) + 'vw';
+      el.style.fontSize = (Math.random() * 46 + 18) + 'px';
+      el.style.animationDuration = (Math.random() * 16 + 14) + 's';
+      el.style.animationDelay = (-Math.random() * 30) + 's';
+      field.appendChild(el);
+    }
+  }
+
+  // Kulüp logo + maç/highlight görsellerini çek (TheSportsDB)
+  async function loadClub(t) {
+    const nameEl = document.getElementById('club-name');
+    const logoEl = document.getElementById('club-logo');
+    const galEl  = document.getElementById('club-gallery');
+    const wmEl   = document.getElementById('club-watermark');
+
+    function render(info) {
+      nameEl.textContent = info.name || THEMES[t].tagline;
+      if (info.logo) {
+        logoEl.src = info.logo;
+        wmEl.style.backgroundImage = 'url("' + info.logo + '")';
+      }
+      galEl.innerHTML = '';
+      info.images.forEach(url => {
+        const img = document.createElement('img');
+        img.loading = 'lazy';
+        img.src = url;
+        img.alt = 'maç görseli';
+        galEl.appendChild(img);
+      });
+    }
+
+    if (clubCache[t]) { render(clubCache[t]); return; }
+    nameEl.textContent = 'Yükleniyor…';
+    galEl.innerHTML = '';
+    try {
+      const res = await fetch('https://www.thesportsdb.com/api/v1/json/3/searchteams.php?t=' + THEMES[t].query, { cache:'force-cache' });
+      if (!res.ok) throw new Error('net');
+      const data = await res.json();
+      const tm = (data.teams || [])[0] || {};
+      const info = {
+        name: tm.strTeam || THEMES[t].tagline,
+        logo: tm.strBadge || tm.strLogo || '',
+        images: [tm.strFanart1, tm.strFanart2, tm.strFanart3, tm.strFanart4, tm.strBanner].filter(Boolean)
+      };
+      clubCache[t] = info;
+      // tema arada değişmediyse bas
+      if (document.documentElement.getAttribute('data-theme') === t) render(info);
+    } catch (e) {
+      nameEl.textContent = THEMES[t].tagline + ' — görseller yüklenemedi';
+    }
+  }
+
+  // ================= GÜNCEL KUR =================
   async function fetchKur() {
     const btn    = document.getElementById('kur-btn');
     const status = document.getElementById('kur-status');
@@ -509,11 +691,10 @@
     btn.classList.add('loading');
     status.className = 'kur-status';
     status.textContent = 'Kur çekiliyor...';
-    // birkaç ücretsiz kaynağı sırayla dene
     const sources = [
-      { url:'https://open.er-api.com/v6/latest/USD', pick:d => d?.rates?.TRY },
-      { url:'https://api.exchangerate-api.com/v4/latest/USD', pick:d => d?.rates?.TRY },
-      { url:'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json', pick:d => d?.usd?.try }
+      { url:'https://open.er-api.com/v6/latest/USD', pick:d => d && d.rates && d.rates.TRY },
+      { url:'https://api.exchangerate-api.com/v4/latest/USD', pick:d => d && d.rates && d.rates.TRY },
+      { url:'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json', pick:d => d && d.usd && d.usd.try }
     ];
     let rate = null;
     for (const s of sources) {
@@ -523,17 +704,17 @@
         const data = await res.json();
         const r = s.pick(data);
         if (r && isFinite(r) && r > 0) { rate = r; break; }
-      } catch (e) { /* sonraki kaynağa geç */ }
+      } catch (e) { /* sonraki kaynak */ }
     }
     btn.disabled = false;
     btn.classList.remove('loading');
     if (rate) {
       KUR = rate;
       document.getElementById('fn-kur').textContent = fmtF(KUR) + '₺';
-      const t = new Date();
+      const now = new Date();
       status.className = 'kur-status ok';
       status.textContent = '$1 = ' + fmtF(KUR) + '₺ · ' +
-        t.toLocaleTimeString('tr-TR', { hour:'2-digit', minute:'2-digit' });
+        now.toLocaleTimeString('tr-TR', { hour:'2-digit', minute:'2-digit' });
       update();
     } else {
       status.className = 'kur-status err';
@@ -541,24 +722,7 @@
     }
   }
 
-  // ===== Beşiktaş arkaplan öğeleri =====
-  function spawnBjk() {
-    const field = document.getElementById('bjk-field');
-    if (!field) return;
-    const items = ['🦅', 'BJK', '1903', 'BEŞİKTAŞ', '⚫⚪', 'KARA KARTAL', 'ÇARŞI'];
-    for (let i = 0; i < 16; i++) {
-      const el = document.createElement('span');
-      el.className = 'bjk-float' + (Math.random() < 0.3 ? ' red' : '');
-      el.textContent = items[Math.floor(Math.random() * items.length)];
-      el.style.left        = (Math.random() * 100) + 'vw';
-      el.style.fontSize     = (Math.random() * 46 + 18) + 'px';
-      el.style.animationDuration = (Math.random() * 16 + 14) + 's';
-      el.style.animationDelay    = (-Math.random() * 30) + 's';
-      field.appendChild(el);
-    }
-  }
-  spawnBjk();
-
+  // ================= EXTRAS =================
   function positionExtras() {
     const card   = document.getElementById('highlight-card');
     const extras = document.getElementById('kpi-extras');
@@ -567,10 +731,7 @@
     extras.style.left   = (rect.right - gridRect.left + 12) + 'px';
     extras.style.top    = (rect.top  - gridRect.top) + 'px';
     extras.style.height = rect.height + 'px';
-    // match extra card heights
-    document.querySelectorAll('.kpi-extra').forEach(el => {
-      el.style.height = rect.height + 'px';
-    });
+    document.querySelectorAll('.kpi-extra').forEach(el => { el.style.height = rect.height + 'px'; });
   }
 
   function toggleExtras() {
@@ -591,10 +752,9 @@
 
   window.addEventListener('resize', () => { if (extrasOpen) positionExtras(); });
 
+  // ================= HESAPLAMA =================
   function getVal(id) { return parseFloat(document.getElementById(id).value) || 0; }
   function setVal(id, v) { document.getElementById(id).value = v; }
-  function fmt(n) { return Math.round(n).toLocaleString('tr-TR'); }
-  function fmtF(n, d=2) { return n.toLocaleString('tr-TR', {minimumFractionDigits:d, maximumFractionDigits:d}); }
 
   function convertRobux(robux, cur) {
     if (cur === 'robux') return fmt(robux) + ' R$';
@@ -602,7 +762,6 @@
     if (cur === 'usd') return usd >= 1000 ? '$' + fmt(Math.round(usd)) : '$' + fmtF(usd);
     return fmt(Math.round(usd * KUR)) + ' ₺';
   }
-
   function convert(robux) { return convertRobux(robux, currency); }
 
   function getAltCurrencies() {
@@ -694,7 +853,12 @@
     `).join('');
   }
 
+  // ================= INIT =================
+  let savedTheme = 'default';
+  try { savedTheme = localStorage.getItem('hesapla-theme') || 'default'; } catch(e) {}
+  setTheme(savedTheme);
   update();
+  fetchKur();   // siteye ilk girişte güncel kuru otomatik çek
 </script>
 </body>
 </html>
