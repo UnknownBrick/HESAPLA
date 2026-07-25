@@ -12,9 +12,10 @@
     --surface2: #181b22;
     --border: rgba(255,255,255,0.07);
     --border2: rgba(255,255,255,0.12);
-    --accent: #7fffb0;
-    --accent-dim: rgba(127,255,176,0.12);
-    --accent-glow: rgba(127,255,176,0.25);
+    --accent: #ffffff;
+    --accent-dim: rgba(255,255,255,0.12);
+    --accent-glow: rgba(255,255,255,0.25);
+    --bjk-red: #e30613;
     --text: #f0f2f5;
     --text2: #8b92a0;
     --text3: #555d6b;
@@ -43,16 +44,50 @@
     opacity: 0.025; pointer-events: none; z-index: 9999;
   }
 
+  /* ===== BEŞİKTAŞ TEMA — arkaplan çubukları ve süzülen öğeler ===== */
+  /* siyah-beyaz diyagonal çubuklar (Kara Kartal forması) */
+  .bjk-stripes {
+    position:fixed; inset:-20%; z-index:0; pointer-events:none;
+    background:repeating-linear-gradient(
+      45deg,
+      rgba(255,255,255,0.035) 0px,
+      rgba(255,255,255,0.035) 34px,
+      transparent 34px,
+      transparent 68px
+    );
+    animation:bjk-stripes-move 18s linear infinite;
+  }
+  @keyframes bjk-stripes-move {
+    from { transform:translate(0,0); }
+    to   { transform:translate(68px,-68px); }
+  }
+
+  /* sürekli yukarı süzülen kartal / BJK öğeleri */
+  .bjk-field { position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden; }
+  .bjk-float {
+    position:absolute; bottom:-120px;
+    font-family:var(--font); font-weight:800; letter-spacing:0.04em;
+    color:rgba(255,255,255,0.05); user-select:none; white-space:nowrap;
+    animation:bjk-rise linear infinite;
+  }
+  .bjk-float.red { color:rgba(227,6,19,0.10); }
+  @keyframes bjk-rise {
+    0%   { transform:translateY(0) rotate(-4deg);   opacity:0; }
+    10%  { opacity:1; }
+    90%  { opacity:1; }
+    100% { transform:translateY(-118vh) rotate(4deg); opacity:0; }
+  }
+
   .glow-blob { position:fixed; border-radius:50%; filter:blur(120px); pointer-events:none; z-index:0; }
-  .glow-blob.g1 { width:500px; height:500px; background:rgba(127,255,176,0.06); top:-150px; right:-100px; }
-  .glow-blob.g2 { width:400px; height:400px; background:rgba(239,108,65,0.05); bottom:-100px; left:-100px; }
+  .glow-blob.g1 { width:500px; height:500px; background:rgba(255,255,255,0.06); top:-150px; right:-100px; }
+  .glow-blob.g2 { width:400px; height:400px; background:rgba(227,6,19,0.12); bottom:-100px; left:-100px; }
 
   .container { position:relative; z-index:1; max-width:860px; margin:0 auto; padding:48px 24px 80px; }
 
   .header { margin-bottom: 48px; }
   .header-badge {
     display:inline-flex; align-items:center; gap:6px;
-    background:var(--accent-dim); border:1px solid rgba(127,255,176,0.2);
+    background:var(--accent-dim); border:1px solid rgba(255,255,255,0.2);
     border-radius:100px; padding:4px 12px; font-size:11px; font-weight:600;
     color:var(--accent); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:16px;
   }
@@ -77,6 +112,33 @@
   .currency-tabs button.active { background:var(--accent); color:#0a0b0f; }
   .currency-tabs button:hover:not(.active) { color:var(--text); }
 
+  /* ===== Güncel kur çekme ===== */
+  .kur-row {
+    display:flex; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:32px;
+  }
+  .kur-btn {
+    display:inline-flex; align-items:center; gap:8px;
+    padding:9px 18px; font-family:var(--font); font-size:13px; font-weight:700;
+    letter-spacing:0.02em; cursor:pointer;
+    color:#fff; background:var(--bjk-red);
+    border:1px solid rgba(227,6,19,0.6); border-radius:var(--radius-sm);
+    transition:filter 0.2s, transform 0.1s, opacity 0.2s;
+    box-shadow:0 0 18px rgba(227,6,19,0.25);
+  }
+  .kur-btn:hover:not(:disabled) { filter:brightness(1.12); }
+  .kur-btn:active:not(:disabled) { transform:translateY(1px); }
+  .kur-btn:disabled { opacity:0.6; cursor:progress; }
+  .kur-btn .ico { display:inline-block; font-size:14px; line-height:1; }
+  .kur-btn.loading .ico { animation:spin 0.8s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .kur-status {
+    font-family:var(--mono); font-size:12px; color:var(--text2);
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius-sm); padding:8px 14px;
+  }
+  .kur-status.ok { color:var(--accent); border-color:var(--border2); }
+  .kur-status.err { color:#ff8b8b; border-color:rgba(227,6,19,0.4); }
+
   /* KPI grid — overflow visible so absolute cards can peek out */
   .kpi-grid {
     display:grid; grid-template-columns:repeat(4,1fr); gap:12px;
@@ -90,8 +152,8 @@
   }
   .kpi-card:hover { border-color:var(--border2); }
   .kpi-card.highlight {
-    background:linear-gradient(135deg, rgba(127,255,176,0.08) 0%, var(--surface) 60%);
-    border-color:rgba(127,255,176,0.25);
+    background:linear-gradient(135deg, rgba(255,255,255,0.08) 0%, var(--surface) 60%);
+    border-color:rgba(255,255,255,0.25);
   }
   .kpi-card.highlight::after {
     content:''; position:absolute; top:0; left:0; right:0; height:2px;
@@ -108,9 +170,9 @@
     top: 8px; right: 8px;
     width: 18px; height: 18px;
     border-radius: 50%;
-    border: 1px solid rgba(127,255,176,0.22);
-    background: rgba(127,255,176,0.07);
-    color: rgba(127,255,176,0.45);
+    border: 1px solid rgba(255,255,255,0.22);
+    background: rgba(255,255,255,0.07);
+    color: rgba(255,255,255,0.45);
     display: flex; align-items: center; justify-content: center;
     cursor: pointer;
     font-size: 14px; line-height: 1;
@@ -121,11 +183,11 @@
     user-select: none;
   }
   .expand-btn:hover {
-    background: rgba(127,255,176,0.16);
-    color: rgba(127,255,176,0.9);
-    border-color: rgba(127,255,176,0.45);
+    background: rgba(255,255,255,0.16);
+    color: rgba(255,255,255,0.9);
+    border-color: rgba(255,255,255,0.45);
   }
-  .expand-btn.open { transform: rotate(45deg); color: var(--accent); background: rgba(127,255,176,0.14); border-color: rgba(127,255,176,0.45); }
+  .expand-btn.open { transform: rotate(45deg); color: var(--accent); background: rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.45); }
 
   /* sliding extra cards — absolutely positioned to the RIGHT of the highlight card, no layout impact */
   .kpi-extras {
@@ -233,7 +295,7 @@
     display:flex; align-items:center; padding-left:12px;
     transition:width 0.3s ease, left 0.3s ease;
   }
-  .share-seg.mine { background:linear-gradient(90deg, rgba(127,255,176,0.35), rgba(127,255,176,0.15)); left:0; }
+  .share-seg.mine { background:linear-gradient(90deg, rgba(255,255,255,0.35), rgba(255,255,255,0.15)); left:0; }
   .share-seg.rest { background:rgba(255,255,255,0.04); }
   .seg-lbl { font-family:var(--mono); font-size:12px; font-weight:600; color:var(--text); white-space:nowrap; }
   .seg-lbl-dim { font-family:var(--mono); font-size:11px; color:var(--text3); white-space:nowrap; }
@@ -256,10 +318,10 @@
   .result-row:last-child { border-bottom:none; }
   .result-row:hover { background:rgba(255,255,255,0.02); }
   .result-row.featured {
-    background:rgba(127,255,176,0.04);
+    background:rgba(255,255,255,0.04);
     border-left:3px solid var(--accent); padding-left:17px;
   }
-  .result-row.featured:hover { background:rgba(127,255,176,0.07); }
+  .result-row.featured:hover { background:rgba(255,255,255,0.07); }
   .row-label { font-size:13px; font-weight:600; color:var(--text2); display:flex; align-items:center; gap:8px; }
   .featured .row-label { color:var(--text); }
   .row-label .badge {
@@ -286,21 +348,32 @@
 </head>
 <body>
 
+<!-- Beşiktaş arkaplan -->
+<div class="bjk-stripes"></div>
+<div class="bjk-field" id="bjk-field"></div>
+
 <div class="glow-blob g1"></div>
 <div class="glow-blob g2"></div>
 
 <div class="container">
 
   <div class="header">
-    <div class="header-badge">Roblox Gelir Hesaplayıcı</div>
+    <div class="header-badge">🦅 Kara Kartal · Roblox Gelir Hesaplayıcı</div>
     <h1>Roblox<br><span>Gelir Tahmini</span></h1>
-    <p class="header-sub">CCU, ARPDAU ve payına göre günlük · aylık · yıllık kazancını hesapla.</p>
+    <p class="header-sub">CCU, ARPDAU ve payına göre günlük · aylık · yıllık kazancını hesapla. <strong style="color:#fff">Beşiktaş 1903</strong> ⚫⚪</p>
   </div>
 
   <div class="currency-tabs">
     <button class="active" onclick="setCurrency('robux')">Robux (R$)</button>
     <button onclick="setCurrency('usd')">Dolar ($)</button>
     <button onclick="setCurrency('tl')">TL (₺)</button>
+  </div>
+
+  <div class="kur-row">
+    <button class="kur-btn" id="kur-btn" onclick="fetchKur()">
+      <span class="ico">↻</span> Güncel Kuru Çek
+    </button>
+    <span class="kur-status" id="kur-status">$1 = 44₺ · varsayılan</span>
   </div>
 
   <div class="kpi-grid" id="kpi-grid">
@@ -415,7 +488,7 @@
   <div class="footnotes">
     <div class="fn-chip">DAU = CCU × <span id="fn-daumult">30</span></div>
     <div class="fn-chip">DevEx: 1,000 R$ = <span>$3.80</span></div>
-    <div class="fn-chip">$1 = <span>44₺</span></div>
+    <div class="fn-chip">$1 = <span id="fn-kur">44₺</span></div>
     <div class="fn-chip">Senin payın: <span id="fn-mypct">%100</span></div>
   </div>
 
@@ -423,10 +496,68 @@
 
 <script>
   const DEVEX = 3.80 / 1000;
-  const KUR = 44;
+  let KUR = 44;
   let currency = 'robux';
   let extrasOpen = false;
   const EXTRA_W = 140; // px width of each extra card
+
+  // ===== Güncel kur çekme (USD -> TRY) =====
+  async function fetchKur() {
+    const btn    = document.getElementById('kur-btn');
+    const status = document.getElementById('kur-status');
+    btn.disabled = true;
+    btn.classList.add('loading');
+    status.className = 'kur-status';
+    status.textContent = 'Kur çekiliyor...';
+    // birkaç ücretsiz kaynağı sırayla dene
+    const sources = [
+      { url:'https://open.er-api.com/v6/latest/USD', pick:d => d?.rates?.TRY },
+      { url:'https://api.exchangerate-api.com/v4/latest/USD', pick:d => d?.rates?.TRY },
+      { url:'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json', pick:d => d?.usd?.try }
+    ];
+    let rate = null;
+    for (const s of sources) {
+      try {
+        const res = await fetch(s.url, { cache:'no-store' });
+        if (!res.ok) continue;
+        const data = await res.json();
+        const r = s.pick(data);
+        if (r && isFinite(r) && r > 0) { rate = r; break; }
+      } catch (e) { /* sonraki kaynağa geç */ }
+    }
+    btn.disabled = false;
+    btn.classList.remove('loading');
+    if (rate) {
+      KUR = rate;
+      document.getElementById('fn-kur').textContent = fmtF(KUR) + '₺';
+      const t = new Date();
+      status.className = 'kur-status ok';
+      status.textContent = '$1 = ' + fmtF(KUR) + '₺ · ' +
+        t.toLocaleTimeString('tr-TR', { hour:'2-digit', minute:'2-digit' });
+      update();
+    } else {
+      status.className = 'kur-status err';
+      status.textContent = 'Kur çekilemedi, tekrar dene';
+    }
+  }
+
+  // ===== Beşiktaş arkaplan öğeleri =====
+  function spawnBjk() {
+    const field = document.getElementById('bjk-field');
+    if (!field) return;
+    const items = ['🦅', 'BJK', '1903', 'BEŞİKTAŞ', '⚫⚪', 'KARA KARTAL', 'ÇARŞI'];
+    for (let i = 0; i < 16; i++) {
+      const el = document.createElement('span');
+      el.className = 'bjk-float' + (Math.random() < 0.3 ? ' red' : '');
+      el.textContent = items[Math.floor(Math.random() * items.length)];
+      el.style.left        = (Math.random() * 100) + 'vw';
+      el.style.fontSize     = (Math.random() * 46 + 18) + 'px';
+      el.style.animationDuration = (Math.random() * 16 + 14) + 's';
+      el.style.animationDelay    = (-Math.random() * 30) + 's';
+      field.appendChild(el);
+    }
+  }
+  spawnBjk();
 
   function positionExtras() {
     const card   = document.getElementById('highlight-card');
